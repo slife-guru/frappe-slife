@@ -356,6 +356,7 @@ frappe.views.Calendar = class Calendar {
 			fields: this.fields,
 			filters: this.list_view.filter_area.get(),
 			field_map: this.field_map,
+			other_fields: this.other_fields
 		};
 		return args;
 	}
@@ -404,6 +405,17 @@ frappe.views.Calendar = class Calendar {
 
 			d.title = frappe.utils.html2text(d.title);
 
+			if (this.other_fields) {
+				this.other_fields.forEach((item) => {
+					if (item in d) {
+						if (item == "leave_type" && d[item] === null) {
+							return;
+						}
+						d.title += frappe.utils.html2text(d[item] + "\n")
+					}
+				})
+			}
+			
 			return d;
 		});
 	}
