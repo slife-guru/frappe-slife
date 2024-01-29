@@ -29,29 +29,35 @@ def get_event_conditions(doctype, filters=None):
 
 
 @frappe.whitelist()
-def get_events(doctype, start, end, field_map, filters=None, fields=None):
-	field_map = frappe._dict(json.loads(field_map))
-	fields = frappe.parse_json(fields)
+def get_events(doctype, start, end, field_map, filters=None, fields=None, other_fields=None):
+    field_map = frappe._dict(json.loads(field_map))
+    fields = frappe.parse_json(fields)
+    other_fields = frappe.parse_json(other_fields)
 
-	doc_meta = frappe.get_meta(doctype)
-	for d in doc_meta.fields:
-		if d.fieldtype == "Color":
-			field_map.update({"color": d.fieldname})
+    doc_meta = frappe.get_meta(doctype)
+    for d in doc_meta.fields:
+        if d.fieldtype == "Color":
+            field_map.update({"color": d.fieldname})
 
-	filters = json.loads(filters) if filters else []
+    filters = json.loads(filters) if filters else []
 
-	if not fields:
-		fields = [field_map.start, field_map.end, field_map.title, "name"]
+    if not fields:
+        fields = [field_map.start, field_map.end, field_map.title, "name"]
+    
+    if other_fields:
+        [fields.append(item) for item in list(other_fields)]
 
-	if field_map.color:
-		fields.append(field_map.color)
+    if field_map.color:
+        fields.append(field_map.color)
 
-	start_date = "ifnull(%s, '0001-01-01 00:00:00')" % field_map.start
-	end_date = "ifnull(%s, '2199-12-31 00:00:00')" % field_map.end
+    start_date = "ifnull(%s, '0001-01-01 00:00:00')" % field_map.start
+    end_date = "ifnull(%s, '2199-12-31 00:00:00')" % field_map.end
 
-	filters += [
-		[doctype, start_date, "<=", end],
-		[doctype, end_date, ">=", start],
-	]
-	fields = list({field for field in fields if field})
-	return frappe.get_list(doctype, fields=fields, filters=filters)
+    filters += [
+        [doctype, start_date, "<=", end],	
+        [doctype, end_date, ">=", start],
+    ]
+    fields = list({field for field in fields if field})
+
+    return frappe.get_list(doctype, fields=fields, filters=filters)
+
